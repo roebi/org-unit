@@ -6,8 +6,8 @@ from typing import Annotated
 import aiosqlite
 from fastapi import APIRouter, Depends, HTTPException
 
-from src.database import active_filter, copy_to_history, get_db, utcnow_str
-from src.models.assignment import (
+from zoo_org.database import active_filter, copy_to_history, get_db, utcnow_str
+from zoo_org.models.assignment import (
     AssignmentCreate,
     AssignmentHistoryOut,
     AssignmentOut,

@@ -2,8 +2,8 @@
 from __future__ import annotations
 
 import pytest
-from src.database import active_filter
-from src.routers.org_units import build_tree
+from zoo_org.database import active_filter
+from zoo_org.routers.org_units import build_tree
 
 
 # ---------------------------------------------------------------------------

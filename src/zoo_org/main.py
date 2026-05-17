@@ -8,8 +8,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
-from src.database import DB_PATH, init_db
-from src.routers import assignments, org_units, persons
+from zoo_org.database import DB_PATH, init_db
+from zoo_org.routers import assignments, org_units, persons
 
 STATIC_DIR = Path(__file__).parent.parent / "static"
 
