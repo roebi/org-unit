@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zoo Org</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: system-ui, sans-serif;
+    font-size: 14px;
+    background: #f5f5f5;
+    color: #1a1a1a;
+  }
+
+  header {
+    background: #1a472a;
+    color: #fff;
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  header h1 { font-size: 18px; flex: 1; }
+  header label { display: flex; align-items: center; gap: 6px; font-size: 13px; }
+  header input[type=checkbox] { cursor: pointer; }
+
+  .lang-btn {
+    background: rgba(255,255,255,0.2);
+    border: 1px solid rgba(255,255,255,0.4);
+    color: #fff;
+    padding: 4px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+  }
+  .lang-btn:hover { background: rgba(255,255,255,0.3); }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto;
+    gap: 12px;
+    padding: 12px;
+    min-height: calc(100vh - 48px);
+  }
+
+  .panel {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+  }
+  .panel-header {
+    padding: 10px 14px;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #f9f9f9;
+    border-radius: 6px 6px 0 0;
+  }
+  .panel-header h2 { font-size: 14px; font-weight: 600; flex: 1; }
+  .panel-body { padding: 10px 14px; flex: 1; overflow-y: auto; max-height: 380px; }
+
+  .assignments-panel { grid-column: 1 / -1; }
+
+  .btn {
+    padding: 4px 10px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    cursor: pointer;
+    font-size: 12px;
+    background: #fff;
+  }
+  .btn:hover { background: #f0f0f0; }
+  .btn-primary { background: #1a472a; color: #fff; border-color: #1a472a; }
+  .btn-primary:hover { background: #145220; }
+  .btn-danger  { color: #b00; border-color: #b00; }
+  .btn-danger:hover { background: #fff0f0; }
+  .btn-sm { padding: 2px 8px; font-size: 11px; }
+
+  /* tree */
+  .tree-node { list-style: none; }
+  .tree-node > ul { padding-left: 18px; }
+  .node-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 4px;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  .node-row:hover { background: #f0f7f3; }
+  .node-row.selected { background: #d4edda; font-weight: 600; }
+  .node-row.inactive { color: #999; font-style: italic; }
+  .toggle { width: 14px; text-align: center; font-size: 11px; color: #666; cursor: pointer; }
+  .node-name { flex: 1; }
+  .node-actions { display: flex; gap: 4px; opacity: 0; }
+  .node-row:hover .node-actions { opacity: 1; }
+
+  /* list */
+  .list-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 4px;
+    border-bottom: 1px solid #f0f0f0;
+  }
+  .list-item:last-child { border-bottom: none; }
+  .list-item.inactive { color: #999; font-style: italic; }
+  .list-item .name { flex: 1; }
+  .list-item .actions { display: flex; gap: 4px; opacity: 0; }
+  .list-item:hover .actions { opacity: 1; }
+
+  .badge {
+    font-size: 10px;
+    padding: 1px 6px;
+    border-radius: 10px;
+    background: #e8f5e9;
+    color: #1a472a;
+    border: 1px solid #c8e6c9;
+  }
+  .badge-open { background: #fff8e1; color: #856404; border-color: #ffd970; }
+
+  /* modal */
+  .overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+  }
+  .overlay.open { display: flex; }
+  .modal {
+    background: #fff;
+    border-radius: 8px;
+    padding: 20px;
+    width: 380px;
+    max-width: 95vw;
+  }
+  .modal h3 { font-size: 15px; margin-bottom: 14px; }
+  .form-group { margin-bottom: 10px; }
+  .form-group label { display: block; font-size: 12px; font-weight: 600; margin-bottom: 3px; color: #555; }
+  .form-group input, .form-group select, .form-group textarea {
+    width: 100%;
+    padding: 6px 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 13px;
+  }
+  .form-group textarea { resize: vertical; min-height: 48px; }
+  .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px; }
+
+  .msg { padding: 8px 12px; border-radius: 4px; margin-bottom: 10px; font-size: 12px; display: none; }
+  .msg.error { background: #ffe0e0; color: #b00; display: block; }
+  .msg.success { background: #e0ffe0; color: #1a472a; display: block; }
+
+  .empty { color: #aaa; font-size: 13px; padding: 12px 0; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1 data-i18n="title">Zoo Org</h1>
+  <label>
+    <input type="checkbox" id="showInactive">
+    <span data-i18n="showInactive">Show inactive</span>
+  </label>
+  <button class="lang-btn" id="langBtn">DE</button>
+</header>
+
+<div class="layout">
+  <div class="panel">
+    <div class="panel-header">
+      <h2 data-i18n="orgTree">Org Tree</h2>
+      <button class="btn btn-primary btn-sm" id="addRootBtn" data-i18n="addRoot">+ Add root unit</button>
+    </div>
+    <div class="panel-body" id="orgTree"></div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header">
+      <h2 data-i18n="persons">Persons</h2>
+      <button class="btn btn-primary btn-sm" id="addPersonBtn" data-i18n="addPerson">+ Add person</button>
+    </div>
+    <div class="panel-body" id="personList"></div>
+  </div>
+
+  <div class="panel assignments-panel">
+    <div class="panel-header">
+      <h2 id="assignmentsTitle" data-i18n="assignments">Assignments</h2>
+      <button class="btn btn-primary btn-sm" id="addAssignmentBtn" style="display:none" data-i18n="assign">+ Assign</button>
+    </div>
+    <div class="panel-body" id="assignmentList">
+      <p class="empty" data-i18n="selectUnit">Select an org unit to see assignments.</p>
+    </div>
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <h3 id="modalTitle"></h3>
+    <div class="msg" id="modalMsg"></div>
+    <div id="modalBody"></div>
+    <div class="modal-actions">
+      <button class="btn" id="modalCancel" data-i18n="cancel">Cancel</button>
+      <button class="btn btn-primary" id="modalSave" data-i18n="save">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = '/api/v1';
+let lang = 'en';
+let showInactive = false;
+let selectedUnitId = null;
+let allPersons = [];
+
+const i18n = {
+  en: {
+    title: 'Zoo Org', orgTree: 'Org Tree', persons: 'Persons',
+    assignments: 'Assignments', addRoot: '+ Add root unit',
+    addPerson: '+ Add person', assign: '+ Assign',
+    showInactive: 'Show inactive', selectUnit: 'Select an org unit to see assignments.',
+    cancel: 'Cancel', save: 'Save', edit: 'Edit', end: 'End',
+    addChildUnit: 'Add child unit', addRootUnit: 'Add root unit',
+    addPersonTitle: 'Add Person', editPersonTitle: 'Edit Person',
+    editUnitTitle: 'Edit Org Unit', addUnitTitle: 'Add Org Unit',
+    addAssignTitle: 'Add Assignment', editAssignTitle: 'Edit Assignment',
+    name: 'Name', description: 'Description', validFrom: 'Valid from',
+    validUntil: 'Valid until (9999-12-31 = active)', mutationReason: 'Reason *',
+    firstName: 'First name', lastName: 'Last name', email: 'Email',
+    notes: 'Notes', person: 'Person', role: 'Role / label',
+    openPosition: '(open position)', filled: 'Filled', open: 'Open',
+    noUnits: 'No org units yet.', noPersons: 'No persons yet.',
+    noAssignments: 'No assignments for this unit.',
+    endConfirm: 'End date (leave today to deactivate now):',
+  },
+  de: {
+    title: 'Zoo Org', orgTree: 'Organigramm', persons: 'Personen',
+    assignments: 'Zuordnungen', addRoot: '+ Einheit hinzufuegen',
+    addPerson: '+ Person hinzufuegen', assign: '+ Zuordnen',
+    showInactive: 'Inaktive anzeigen', selectUnit: 'Einheit auswaehlen um Zuordnungen zu sehen.',
+    cancel: 'Abbrechen', save: 'Speichern', edit: 'Bearbeiten', end: 'Beenden',
+    addChildUnit: 'Untereinheit hinzufuegen', addRootUnit: 'Stammeinheit hinzufuegen',
+    addPersonTitle: 'Person hinzufuegen', editPersonTitle: 'Person bearbeiten',
+    editUnitTitle: 'Einheit bearbeiten', addUnitTitle: 'Einheit hinzufuegen',
+    addAssignTitle: 'Zuordnung hinzufuegen', editAssignTitle: 'Zuordnung bearbeiten',
+    name: 'Name', description: 'Beschreibung', validFrom: 'Gueltig ab',
+    validUntil: 'Gueltig bis (9999-12-31 = aktiv)', mutationReason: 'Grund *',
+    firstName: 'Vorname', lastName: 'Nachname', email: 'E-Mail',
+    notes: 'Notizen', person: 'Person', role: 'Rolle / Bezeichnung',
+    openPosition: '(offene Stelle)', filled: 'Besetzt', open: 'Offen',
+    noUnits: 'Keine Einheiten vorhanden.', noPersons: 'Keine Personen vorhanden.',
+    noAssignments: 'Keine Zuordnungen fuer diese Einheit.',
+    endConfirm: 'Enddatum (leer = heute deaktivieren):',
+  }
+};
+
+const t = (key) => (i18n[lang][key] || key);
+
+function applyI18n() {
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    el.textContent = t(el.dataset.i18n);
+  });
+  document.getElementById('langBtn').textContent = lang === 'en' ? 'DE' : 'EN';
+}
+
+// ---- API helpers ----
+
+async function api(method, path, body) {
+  const opts = { method, headers: { 'Content-Type': 'application/json' } };
+  if (body) opts.body = JSON.stringify(body);
+  const r = await fetch(API + path, opts);
+  if (!r.ok) {
+    const err = await r.json().catch(() => ({ detail: r.statusText }));
+    throw new Error(err.detail || JSON.stringify(err));
+  }
+  if (r.status === 204) return null;
+  return r.json();
+}
+
+// ---- Render helpers ----
+
+function today() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function isActive(rec) {
+  const d = today();
+  return rec.valid_from <= d && rec.valid_until >= d;
+}
+
+// ---- Org tree ----
+
+async function loadTree() {
+  const active_only = showInactive ? 'false' : 'true';
+  const nodes = await api('GET', `/org-units?active_only=${active_only}`);
+  renderTree(buildTree(nodes));
+}
+
+function buildTree(flat) {
+  const byId = {};
+  flat.forEach(n => { byId[n.id] = { ...n, children: [] }; });
+  const roots = [];
+  Object.values(byId).forEach(n => {
+    if (n.parent_id && byId[n.parent_id]) byId[n.parent_id].children.push(n);
+    else roots.push(n);
+  });
+  roots.sort((a, b) => a.sort_order - b.sort_order);
+  return roots;
+}
+
+function renderTree(nodes) {
+  const el = document.getElementById('orgTree');
+  if (!nodes.length) { el.innerHTML = `<p class="empty">${t('noUnits')}</p>`; return; }
+  el.innerHTML = '';
+  const ul = document.createElement('ul');
+  ul.style.listStyle = 'none';
+  nodes.forEach(n => ul.appendChild(makeNode(n)));
+  el.appendChild(ul);
+}
+
+function makeNode(node) {
+  const li = document.createElement('li');
+  li.className = 'tree-node';
+
+  const row = document.createElement('div');
+  const active = isActive(node);
+  row.className = 'node-row' + (node.id === selectedUnitId ? ' selected' : '') + (!active ? ' inactive' : '');
+
+  const toggle = document.createElement('span');
+  toggle.className = 'toggle';
+  toggle.textContent = node.children && node.children.length ? '▶' : ' ';
+
+  const name = document.createElement('span');
+  name.className = 'node-name';
+  name.textContent = node.name;
+
+  const actions = document.createElement('span');
+  actions.className = 'node-actions';
+
+  const editBtn = document.createElement('button');
+  editBtn.className = 'btn btn-sm';
+  editBtn.textContent = t('edit');
+  editBtn.onclick = (e) => { e.stopPropagation(); openEditUnit(node); };
+
+  const addChildBtn = document.createElement('button');
+  addChildBtn.className = 'btn btn-sm';
+  addChildBtn.textContent = '+';
+  addChildBtn.title = t('addChildUnit');
+  addChildBtn.onclick = (e) => { e.stopPropagation(); openAddUnit(node.id); };
+
+  const endBtn = document.createElement('button');
+  endBtn.className = 'btn btn-sm btn-danger';
+  endBtn.textContent = t('end');
+  endBtn.onclick = (e) => { e.stopPropagation(); openEndRecord('org-units', node.id, loadTree); };
+
+  actions.append(editBtn, addChildBtn);
+  if (active) actions.appendChild(endBtn);
+  row.append(toggle, name, actions);
+
+  row.onclick = () => selectUnit(node.id, node.name);
+
+  li.appendChild(row);
+
+  if (node.children && node.children.length) {
+    const childUl = document.createElement('ul');
+    childUl.style.listStyle = 'none';
+    childUl.style.display = 'none';
+    node.children.sort((a, b) => a.sort_order - b.sort_order).forEach(c => childUl.appendChild(makeNode(c)));
+    li.appendChild(childUl);
+
+    toggle.onclick = (e) => {
+      e.stopPropagation();
+      const open = childUl.style.display !== 'none';
+      childUl.style.display = open ? 'none' : 'block';
+      toggle.textContent = open ? '▶' : '▼';
+    };
+  }
+
+  return li;
+}
+
+function selectUnit(id, name) {
+  selectedUnitId = id;
+  document.getElementById('assignmentsTitle').textContent = `${t('assignments')}: ${name}`;
+  document.getElementById('addAssignmentBtn').style.display = '';
+  loadTree();
+  loadAssignments(id);
+}
+
+// ---- Persons ----
+
+async function loadPersons() {
+  const active_only = showInactive ? 'false' : 'true';
+  allPersons = await api('GET', `/persons?active_only=${active_only}`);
+  renderPersons(allPersons);
+}
+
+function renderPersons(persons) {
+  const el = document.getElementById('personList');
+  if (!persons.length) { el.innerHTML = `<p class="empty">${t('noPersons')}</p>`; return; }
+  el.innerHTML = '';
+  persons.forEach(p => {
+    const item = document.createElement('div');
+    item.className = 'list-item' + (!isActive(p) ? ' inactive' : '');
+
+    const name = document.createElement('span');
+    name.className = 'name';
+    name.textContent = `${p.last_name}, ${p.first_name}`;
+    if (p.email) name.title = p.email;
+
+    const actions = document.createElement('span');
+    actions.className = 'actions';
+
+    const editBtn = document.createElement('button');
+    editBtn.className = 'btn btn-sm';
+    editBtn.textContent = t('edit');
+    editBtn.onclick = () => openEditPerson(p);
+
+    const endBtn = document.createElement('button');
+    endBtn.className = 'btn btn-sm btn-danger';
+    endBtn.textContent = t('end');
+    endBtn.onclick = () => openEndRecord('persons', p.id, loadPersons);
+
+    actions.append(editBtn);
+    if (isActive(p)) actions.appendChild(endBtn);
+    item.append(name, actions);
+    el.appendChild(item);
+  });
+}
+
+// ---- Assignments ----
+
+async function loadAssignments(unitId) {
+  const active_only = showInactive ? 'false' : 'true';
+  const items = await api('GET', `/org-units/${unitId}/assignments?active_only=${active_only}`);
+  renderAssignments(items);
+}
+
+function renderAssignments(items) {
+  const el = document.getElementById('assignmentList');
+  if (!items.length) { el.innerHTML = `<p class="empty">${t('noAssignments')}</p>`; return; }
+  el.innerHTML = '';
+  items.forEach(a => {
+    const item = document.createElement('div');
+    item.className = 'list-item' + (!isActive(a) ? ' inactive' : '');
+
+    const nameSpan = document.createElement('span');
+    nameSpan.className = 'name';
+    if (a.person_id) {
+      const p = allPersons.find(x => x.id === a.person_id);
+      nameSpan.textContent = p ? `${p.last_name}, ${p.first_name}` : `Person #${a.person_id}`;
+    } else {
+      nameSpan.textContent = t('openPosition');
+    }
+
+    const badge = document.createElement('span');
+    badge.className = a.person_id ? 'badge' : 'badge badge-open';
+    badge.textContent = a.role_label || (a.person_id ? t('filled') : t('open'));
+
+    const actions = document.createElement('span');
+    actions.className = 'actions';
+
+    const editBtn = document.createElement('button');
+    editBtn.className = 'btn btn-sm';
+    editBtn.textContent = t('edit');
+    editBtn.onclick = () => openEditAssignment(a);
+
+    const endBtn = document.createElement('button');
+    endBtn.className = 'btn btn-sm btn-danger';
+    endBtn.textContent = t('end');
+    endBtn.onclick = () => openEndRecord('assignments', a.id, () => loadAssignments(selectedUnitId));
+
+    actions.append(editBtn);
+    if (isActive(a)) actions.appendChild(endBtn);
+    item.append(nameSpan, badge, actions);
+    el.appendChild(item);
+  });
+}
+
+// ---- Modal helpers ----
+
+function field(labelKey, id, type = 'text', value = '', required = false) {
+  return `<div class="form-group">
+    <label for="${id}">${t(labelKey)}${required ? ' *' : ''}</label>
+    <input type="${type}" id="${id}" value="${escHtml(value)}"${required ? ' required' : ''}>
+  </div>`;
+}
+
+function textareaField(labelKey, id, value = '') {
+  return `<div class="form-group">
+    <label for="${id}">${t(labelKey)}</label>
+    <textarea id="${id}">${escHtml(value)}</textarea>
+  </div>`;
+}
+
+function escHtml(s) {
+  return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function openModal(title, bodyHtml, onSave) {
+  document.getElementById('modalTitle').textContent = title;
+  document.getElementById('modalBody').innerHTML = bodyHtml;
+  document.getElementById('modalMsg').className = 'msg';
+  document.getElementById('modalMsg').textContent = '';
+  document.getElementById('overlay').classList.add('open');
+  document.getElementById('modalSave').onclick = async () => {
+    document.getElementById('modalMsg').className = 'msg';
+    try { await onSave(); } catch (e) {
+      document.getElementById('modalMsg').className = 'msg error';
+      document.getElementById('modalMsg').textContent = e.message;
+    }
+  };
+}
+
+function closeModal() {
+  document.getElementById('overlay').classList.remove('open');
+}
+
+function val(id) { return (document.getElementById(id)?.value || '').trim(); }
+
+// ---- OrgUnit forms ----
+
+function orgUnitForm(unit = {}) {
+  return field('name', 'f_name', 'text', unit.name || '', true)
+    + textareaField('description', 'f_desc', unit.description || '')
+    + field('validFrom', 'f_vf', 'date', unit.valid_from || today(), true)
+    + field('validUntil', 'f_vu', 'date', unit.valid_until || '9999-12-31', true)
+    + field('mutationReason', 'f_reason', 'text', '', true);
+}
+
+function openAddUnit(parentId = null) {
+  openModal(t(parentId ? 'addChildUnit' : 'addRootUnit'), orgUnitForm(), async () => {
+    await api('POST', '/org-units', {
+      name: val('f_name'), description: val('f_desc'),
+      parent_id: parentId, sort_order: 0,
+      valid_from: val('f_vf'), valid_until: val('f_vu'),
+      mutation_reason: val('f_reason'),
+    });
+    closeModal();
+    loadTree();
+  });
+}
+
+function openEditUnit(unit) {
+  openModal(t('editUnitTitle'), orgUnitForm(unit), async () => {
+    await api('PATCH', `/org-units/${unit.id}`, {
+      name: val('f_name'), description: val('f_desc'),
+      valid_from: val('f_vf'), valid_until: val('f_vu'),
+      mutation_reason: val('f_reason'),
+    });
+    closeModal();
+    loadTree();
+    if (selectedUnitId === unit.id) loadAssignments(unit.id);
+  });
+}
+
+// ---- Person forms ----
+
+function personForm(p = {}) {
+  return field('firstName', 'f_fn', 'text', p.first_name || '', true)
+    + field('lastName', 'f_ln', 'text', p.last_name || '', true)
+    + field('email', 'f_email', 'email', p.email || '')
+    + textareaField('notes', 'f_notes', p.notes || '')
+    + field('validFrom', 'f_vf', 'date', p.valid_from || today(), true)
+    + field('validUntil', 'f_vu', 'date', p.valid_until || '9999-12-31', true)
+    + field('mutationReason', 'f_reason', 'text', '', true);
+}
+
+function openAddPerson() {
+  openModal(t('addPersonTitle'), personForm(), async () => {
+    await api('POST', '/persons', {
+      first_name: val('f_fn'), last_name: val('f_ln'),
+      email: val('f_email') || null, notes: val('f_notes') || null,
+      valid_from: val('f_vf'), valid_until: val('f_vu'),
+      mutation_reason: val('f_reason'),
+    });
+    closeModal();
+    loadPersons();
+  });
+}
+
+function openEditPerson(p) {
+  openModal(t('editPersonTitle'), personForm(p), async () => {
+    await api('PATCH', `/persons/${p.id}`, {
+      first_name: val('f_fn'), last_name: val('f_ln'),
+      email: val('f_email') || null, notes: val('f_notes') || null,
+      valid_from: val('f_vf'), valid_until: val('f_vu'),
+      mutation_reason: val('f_reason'),
+    });
+    closeModal();
+    loadPersons();
+    if (selectedUnitId) loadAssignments(selectedUnitId);
+  });
+}
+
+// ---- Assignment forms ----
+
+function personSelectOptions(selectedId = null) {
+  const openOpt = `<option value="">${t('openPosition')}</option>`;
+  const opts = allPersons.filter(isActive).map(p =>
+    `<option value="${p.id}"${p.id === selectedId ? ' selected' : ''}>${p.last_name}, ${p.first_name}</option>`
+  ).join('');
+  return openOpt + opts;
+}
+
+function assignmentForm(a = {}) {
+  return `<div class="form-group">
+      <label for="f_person">${t('person')}</label>
+      <select id="f_person">${personSelectOptions(a.person_id)}</select>
+    </div>`
+    + field('role', 'f_role', 'text', a.role_label || '')
+    + field('validFrom', 'f_vf', 'date', a.valid_from || today(), true)
+    + field('validUntil', 'f_vu', 'date', a.valid_until || '9999-12-31', true)
+    + field('mutationReason', 'f_reason', 'text', '', true);
+}
+
+function openAddAssignment() {
+  if (!selectedUnitId) return;
+  openModal(t('addAssignTitle'), assignmentForm(), async () => {
+    const pid = document.getElementById('f_person').value;
+    await api('POST', '/assignments', {
+      org_unit_id: selectedUnitId,
+      person_id: pid ? parseInt(pid) : null,
+      role_label: val('f_role') || null,
+      valid_from: val('f_vf'), valid_until: val('f_vu'),
+      mutation_reason: val('f_reason'),
+    });
+    closeModal();
+    loadAssignments(selectedUnitId);
+  });
+}
+
+function openEditAssignment(a) {
+  openModal(t('editAssignTitle'), assignmentForm(a), async () => {
+    const pid = document.getElementById('f_person').value;
+    await api('PATCH', `/assignments/${a.id}`, {
+      person_id: pid ? parseInt(pid) : null,
+      role_label: val('f_role') || null,
+      valid_from: val('f_vf'), valid_until: val('f_vu'),
+      mutation_reason: val('f_reason'),
+    });
+    closeModal();
+    loadAssignments(selectedUnitId);
+    loadPersons();
+  });
+}
+
+// ---- End record (deactivate) ----
+
+function openEndRecord(resource, id, onDone) {
+  const body = `<div class="form-group">
+    <label for="f_vu">${t('endConfirm')}</label>
+    <input type="date" id="f_vu" value="${today()}">
+  </div>` + field('mutationReason', 'f_reason', 'text', '', true);
+  openModal(t('end'), body, async () => {
+    await api('PATCH', `/${resource}/${id}`, {
+      valid_until: val('f_vu') || today(),
+      mutation_reason: val('f_reason'),
+    });
+    closeModal();
+    onDone();
+  });
+}
+
+// ---- Wire up events ----
+
+document.getElementById('langBtn').onclick = () => {
+  lang = lang === 'en' ? 'de' : 'en';
+  applyI18n();
+  // re-render to apply translated labels
+  loadTree();
+  loadPersons();
+  if (selectedUnitId) loadAssignments(selectedUnitId);
+};
+
+document.getElementById('showInactive').onchange = (e) => {
+  showInactive = e.target.checked;
+  loadTree();
+  loadPersons();
+  if (selectedUnitId) loadAssignments(selectedUnitId);
+};
+
+document.getElementById('addRootBtn').onclick = () => openAddUnit(null);
+document.getElementById('addPersonBtn').onclick = () => openAddPerson();
+document.getElementById('addAssignmentBtn').onclick = () => openAddAssignment();
+document.getElementById('modalCancel').onclick = closeModal;
+document.getElementById('overlay').onclick = (e) => { if (e.target === document.getElementById('overlay')) closeModal(); };
+
+// ---- Initial load ----
+async function init() {
+  applyI18n();
+  await loadPersons();
+  await loadTree();
+}
+
+init();
+</script>
+</body>
+</html>
