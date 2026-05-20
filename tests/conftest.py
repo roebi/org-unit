@@ -4,8 +4,8 @@ import pytest_asyncio
 import aiosqlite
 from httpx import AsyncClient, ASGITransport
 
-from zoo_org.database import _DDL, get_db
-from zoo_org.main import create_app
+from org_unit.database import _DDL, get_db
+from org_unit.main import create_app
 
 
 @pytest_asyncio.fixture
