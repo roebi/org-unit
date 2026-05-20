@@ -1,0 +1,1 @@
+# Keep the data directory in git so the runtime database folder exists in new clones.
