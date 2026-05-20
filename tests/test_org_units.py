@@ -9,13 +9,13 @@ from tests.conftest import make_org_unit, make_person, make_assignment
 async def test_create_org_unit_returns_201(client):
     """FR-01: POST creates record and returns 201."""
     r = await client.post("/api/v1/org-units", json={
-        "name": "Zoo Direction",
+        "name": "Direction",
         "valid_from": "2026-01-01",
         "mutation_reason": "initial setup",
     })
     assert r.status_code == 201
     data = r.json()
-    assert data["name"] == "Zoo Direction"
+    assert data["name"] == "Direction"
     assert data["id"] is not None
     assert data["valid_until"] == "9999-12-31"
     assert data["mutation_reason"] == "initial setup"

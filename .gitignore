@@ -4,5 +4,5 @@ __pycache__/
 .pytest_cache/
 dist/
 *.egg-info/
-data/zoo.db
+data/org-unit.db
 .ruff_cache/

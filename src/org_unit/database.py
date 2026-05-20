@@ -12,7 +12,7 @@ from typing import AsyncGenerator
 
 import aiosqlite
 
-DB_PATH: Path = Path("/app/data/zoo.db")
+DB_PATH: Path = Path("/app/data/org-unit.db")
 
 SENTINEL_DATE = "9999-12-31"
 

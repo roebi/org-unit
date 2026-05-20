@@ -3,9 +3,9 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "zoo-org"
+name = "org-unit"
 version = "0.1.0"
-description = "Zoo organizational structure digitalization"
+description = "organizational structure digitalization"
 requires-python = ">=3.13"
 dependencies = [
     "sw-dev-agent-framework>=0.1.1,<0.2",

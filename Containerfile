@@ -22,5 +22,5 @@ RUN mkdir -p /app/data
 
 EXPOSE 8000
 
-CMD ["uvicorn", "zoo_org.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "org_unit.main:app", "--host", "0.0.0.0", "--port", "8000"]
 

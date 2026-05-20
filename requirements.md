@@ -2,10 +2,10 @@
 
 ## Goal Statement
 
-Digitalize the hierarchical organizational structure (Aufbauorganisation) of a zoo
+Digitalize the hierarchical organizational structure (Aufbauorganisation) of a juristical person
 as a FastAPI + SQLite REST service in a Podman container with a single-HTML web GUI.
 
-- Primary user: zoo administrator or HR manager via a web browser
+- Primary user: juristical person administrator or HR manager via a web browser
 - Core action: manage OrgUnit tree, Person flat list, and Assignment bridge; track full change history
 - Target platform: web service (FastAPI + Uvicorn) in a Podman container, port 8000
 - Key constraints: Python 3.13, SQLite (aiosqlite), Vanilla JS (no build step), bi-temporal data model, no hard delete, mutation_reason mandatory on all writes, history tables for all 3 entities
@@ -82,7 +82,7 @@ FR-28: Deactivate an Assignment by sending PATCH /api/v1/assignments/{id} with v
 
 ### Database Initialisation
 
-FR-29: Create the SQLite database file at /app/data/zoo.db and all 6 tables (org_unit, person, assignment, org_unit_history, person_history, assignment_history) on application startup when the file does not yet exist; start without error.
+FR-29: Create the SQLite database file at /app/data/org-unit.db and all 6 tables (org_unit, person, assignment, org_unit_history, person_history, assignment_history) on application startup when the file does not yet exist; start without error.
 
 FR-30: Enforce valid_from DATE NOT NULL and valid_until DATE NOT NULL on all 6 tables at the database schema level; never store NULL in either column.
 
@@ -120,7 +120,7 @@ NFR-05: Auditability - every previous state of every entity is preserved in the 
 
 NFR-06: Internationalisation - all field names, API paths, and source code identifiers are English; the GUI supports DE and EN display language at runtime via a toggle.
 
-NFR-07: Reliability - the application starts without error when /app/data/zoo.db does not exist and creates all tables automatically.
+NFR-07: Reliability - the application starts without error when /app/data/org-unit.db does not exist and creates all tables automatically.
 
 NFR-08: CORS - allow_origins is restricted to localhost origins only; wildcard "*" is not used in any deployed configuration.
 

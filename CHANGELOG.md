@@ -22,7 +22,7 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 - active_only query parameter on all list endpoints (default true)
 - FastAPI backend with auto-generated OpenAPI 3.1.0 spec at /openapi.json
 - Swagger UI at /docs
-- SQLite database created automatically at /app/data/zoo.db on first startup
+- SQLite database created automatically at /app/data/org-unit.db on first startup
 - Single-file Vanilla JS web GUI at / with DE/EN language toggle
 - GUI: OrgUnit tree (expandable), Person list, Assignments panel
 - GUI: add / edit / end (deactivate) actions for all entities with mutation_reason field

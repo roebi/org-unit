@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
 
-podman build -t zoo-org .
+podman build -t org-unit .
 

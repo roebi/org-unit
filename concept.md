@@ -1,9 +1,9 @@
-# Zoo Org Structure - Concept
+# Org Structure - Concept
 
 ## Goal
 
-Digitalize the hierarchical organizational structure (Aufbauorganisation) of a zoo.
-Reference: https://de.wikipedia.org/wiki/Aufbauorganisation#Stellengestaltung
+Digitalize the hierarchical organizational structure (Aufbauorganisation) of a juristical person.
+Reference: [https://de.wikipedia.org/wiki/Aufbauorganisation#Stellengestaltung](https://de.wikipedia.org/wiki/Aufbauorganisation#Stellengestaltung)
 
 All code, field names, and API paths are **English**.
 The GUI supports a DE/EN language switch. Content (names, descriptions) is user-defined.
@@ -25,13 +25,13 @@ The GUI supports a DE/EN language switch. Content (names, descriptions) is user-
 
 **OrgUnit** - one self-referencing tree
 
-| Field        | Type              | Notes                                   |
-|--------------|-------------------|-----------------------------------------|
-| id           | INTEGER PK        | Auto-increment                          |
-| name         | TEXT NOT NULL     | Display name                            |
-| description  | TEXT              | Optional free text                      |
-| parent_id    | INTEGER           | FK -> OrgUnit.id; NULL = root node      |
-| sort_order   | INTEGER NOT NULL  | Sibling order within same parent        |
+| Field           | Type              | Notes                                   |
+|-----------------|-------------------|-----------------------------------------|
+| id              | INTEGER PK        | Auto-increment                          |
+| name            | TEXT NOT NULL     | Display name                            |
+| description     | TEXT              | Optional free text                      |
+| parent_id       | INTEGER           | FK -> OrgUnit.id; NULL = root node      |
+| sort_order      | INTEGER NOT NULL  | Sibling order within same parent        |
 | valid_from      | DATE NOT NULL     | Business start date                     |
 | valid_until     | DATE NOT NULL     | Business end date; 9999-12-31 = active  |
 | updated_at      | DATETIME NOT NULL | Last write to DB                        |
@@ -39,13 +39,13 @@ The GUI supports a DE/EN language switch. Content (names, descriptions) is user-
 
 **Person** - flat table, no hierarchy
 
-| Field        | Type              | Notes                                              |
-|--------------|-------------------|----------------------------------------------------|
-| id           | INTEGER PK        | Auto-increment                                     |
-| first_name   | TEXT NOT NULL     |                                                    |
-| last_name    | TEXT NOT NULL     |                                                    |
-| email        | TEXT              | Optional                                           |
-| notes        | TEXT              | Optional free text                                 |
+| Field           | Type              | Notes                                              |
+|-----------------|-------------------|----------------------------------------------------|
+| id              | INTEGER PK        | Auto-increment                                     |
+| first_name      | TEXT NOT NULL     |                                                    |
+| last_name       | TEXT NOT NULL     |                                                    |
+| email           | TEXT              | Optional                                           |
+| notes           | TEXT              | Optional free text                                 |
 | valid_from      | DATE NOT NULL     | Entry date (Eintrittsdatum)                        |
 | valid_until     | DATE NOT NULL     | Exit date (Austrittsdatum); 9999-12-31 = active    |
 | updated_at      | DATETIME NOT NULL | Last write to DB                                   |
@@ -53,12 +53,12 @@ The GUI supports a DE/EN language switch. Content (names, descriptions) is user-
 
 **Assignment** - bridge between OrgUnit and Person
 
-| Field        | Type              | Notes                                   |
-|--------------|-------------------|-----------------------------------------|
-| id           | INTEGER PK        | Auto-increment                          |
-| org_unit_id  | INTEGER NOT NULL  | FK -> OrgUnit.id                        |
-| person_id    | INTEGER NOT NULL  | FK -> Person.id                         |
-| role_label   | TEXT              | e.g. "Head", "Deputy", "Intern"         |
+| Field           | Type              | Notes                                   |
+|-----------------|-------------------|-----------------------------------------|
+| id              | INTEGER PK        | Auto-increment                          |
+| org_unit_id     | INTEGER NOT NULL  | FK -> OrgUnit.id                        |
+| person_id       | INTEGER NOT NULL  | FK -> Person.id                         |
+| role_label      | TEXT              | e.g. "Head", "Deputy", "Intern"         |
 | valid_from      | DATE NOT NULL     | Assignment start date                   |
 | valid_until     | DATE NOT NULL     | Assignment end date; 9999-12-31 = active|
 | updated_at      | DATETIME NOT NULL | Last write to DB                        |
@@ -81,14 +81,16 @@ The `mutation_reason` travels with every row into history, so each version
 explains why it existed. The `replaced_at` explains when it was superseded.
 
 **Update flow:**
-```
+
+```flow
 PATCH /org-units/5  { name: "Big Cats", mutation_reason: "Corrected category" }
   1. copy current OrgUnit(id=5) -> org_unit_history (replaced_at = now())
   2. write new state -> org_unit (updated_at = now())
 ```
 
 History then reads as a clear story:
-```
+
+```history
 org_unit_history id=5:
   name="Big Cats Dept"  mutation_reason="Initial setup"      replaced_at=2026-01-01
   name="Big Cats"       mutation_reason="Shortened name"     replaced_at=2026-03-15
@@ -98,6 +100,7 @@ org_unit id=5 (current):
 ```
 
 **Future cleanup:**
+
 ```sql
 DELETE FROM org_unit_history   WHERE replaced_at < :cutoff_date;
 DELETE FROM person_history     WHERE replaced_at < :cutoff_date;
@@ -116,7 +119,8 @@ Every entity carries two independent time axes:
 | Technical time| updated_at / replaced_at | When was it written to the DB         |
 
 Example: enter today (2026-05-15) a new OrgUnit that starts 2027-01-01:
-```
+
+```example
 valid_from       = 2027-01-01               <- business reality
 valid_until      = 9999-12-31               <- no end planned
 updated_at       = 2026-05-15               <- technical: when you typed it
@@ -124,6 +128,7 @@ mutation_reason  = "Planned restructuring"  <- why it was created
 ```
 
 Active record query (same pattern for all entities):
+
 ```sql
 WHERE valid_from <= :today AND valid_until >= :today
 ```
@@ -189,8 +194,8 @@ Requests without it are rejected (HTTP 422). No defaults, no fallbacks.
 
 ## Project Layout
 
-```
-zoo-org/
+```tree
+org-unit/
   Containerfile
   pyproject.toml
   src/
@@ -207,7 +212,7 @@ zoo-org/
   static/
     index.html            <- Web GUI (single file, DE/EN switch)
   data/
-    .gitkeep              <- zoo.db created here on first startup
+    .gitkeep              <- org-unit.db created here on first startup
 ```
 
 ---
@@ -215,13 +220,13 @@ zoo-org/
 ## Container Run
 
 ```bash
-podman build -t zoo-org .
+podman build -t org-unit .
 
 podman run -d \
   -p 8000:8000 \
-  -v zoo-data:/app/data \
-  --name zoo-org \
-  zoo-org:latest
+  -v org-unit-data:/app/data \
+  --name org-unit \
+  org-unit:latest
 ```
 
 - OpenAPI spec: `http://localhost:8000/openapi.json`
@@ -232,17 +237,17 @@ podman run -d \
 
 ## Web GUI (v1 scope)
 
-```
+```tree
 +----------------------+----------------------+
 |  Org Tree    [DE|EN] |  Persons             |
 |  [+ Add unit]        |  [+ Add person]      |
 |                      |                      |
-|  > Zoo Direction     |  Smith, John  [edit] |
-|    > Animal Care     |  Muster, Hans [edit] |
-|      Big Cats [edit] |  ...                 |
-|      Primates [edit] |                      |
+|  > Direction         |  Smith, John  [edit] |
+|    > Care            |  Muster, Hans [edit] |
+|      One [edit]      |  ...                 |
+|      Two [edit]      |                      |
 +----------------------+                      |
-|  Assignments: Big Cats                      |
+|  Assignments: One                           |
 |  [+ Assign person]                          |
 |  - Muster, Hans  (Head)    [end]            |
 |  - Smith, John   (Deputy)  [end]            |
