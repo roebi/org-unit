@@ -9,6 +9,7 @@ RUN pip install --no-cache-dir --upgrade pip==26.1.1 && \
     pip install --no-cache-dir "uv==0.11.14"
 
 COPY pyproject.toml .
+COPY README.md .
 
 RUN uv pip install --system --no-cache-dir -r pyproject.toml
 
@@ -31,6 +32,7 @@ RUN pip install --no-cache-dir --upgrade pip==26.1.1 && \
     pip install --no-cache-dir "uv==0.11.14"
 
 COPY pyproject.toml .
+COPY README.md .
 
 RUN uv pip install --system --no-cache-dir -r pyproject.toml
 
