@@ -221,6 +221,7 @@ let lang = 'en';
 let showInactive = false;
 let selectedUnitId = null;
 let allPersons = [];
+const expandedUnitIds = new Set();
 
 const i18n = {
   en: {
@@ -302,12 +303,15 @@ function isActive(rec) {
 async function loadTree() {
   const active_only = showInactive ? 'false' : 'true';
   const nodes = await api('GET', `/org-units?active_only=${active_only}`);
-  renderTree(buildTree(nodes));
+  const tree = buildTree(nodes);
+  if (selectedUnitId) expandPathToUnit(selectedUnitId);
+  renderTree(tree);
 }
 
 function buildTree(flat) {
   const byId = {};
   flat.forEach(n => { byId[n.id] = { ...n, children: [] }; });
+  orgUnitParentById = byId;
   const roots = [];
   Object.values(byId).forEach(n => {
     if (n.parent_id && byId[n.parent_id]) byId[n.parent_id].children.push(n);
@@ -315,6 +319,14 @@ function buildTree(flat) {
   });
   roots.sort((a, b) => a.sort_order - b.sort_order);
   return roots;
+}
+
+function expandPathToUnit(unitId) {
+  let node = orgUnitParentById[unitId];
+  while (node && node.parent_id && orgUnitParentById[node.parent_id]) {
+    expandedUnitIds.add(node.parent_id);
+    node = orgUnitParentById[node.parent_id];
+  }
 }
 
 function renderTree(nodes) {
@@ -373,15 +385,19 @@ function makeNode(node) {
   if (node.children && node.children.length) {
     const childUl = document.createElement('ul');
     childUl.style.listStyle = 'none';
-    childUl.style.display = 'none';
+    const open = expandedUnitIds.has(node.id);
+    childUl.style.display = open ? 'block' : 'none';
+    toggle.textContent = open ? '▼' : '▶';
     node.children.sort((a, b) => a.sort_order - b.sort_order).forEach(c => childUl.appendChild(makeNode(c)));
     li.appendChild(childUl);
 
     toggle.onclick = (e) => {
       e.stopPropagation();
-      const open = childUl.style.display !== 'none';
-      childUl.style.display = open ? 'none' : 'block';
-      toggle.textContent = open ? '▶' : '▼';
+      const isOpen = childUl.style.display !== 'none';
+      childUl.style.display = isOpen ? 'none' : 'block';
+      toggle.textContent = isOpen ? '▶' : '▼';
+      if (isOpen) expandedUnitIds.delete(node.id);
+      else expandedUnitIds.add(node.id);
     };
   }
 
@@ -390,6 +406,7 @@ function makeNode(node) {
 
 function selectUnit(id, name) {
   selectedUnitId = id;
+  expandPathToUnit(id);
   document.getElementById('assignmentsTitle').textContent = `${t('assignments')}: ${name}`;
   document.getElementById('addAssignmentBtn').style.display = '';
   loadTree();
